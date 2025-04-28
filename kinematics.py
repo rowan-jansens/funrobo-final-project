@@ -108,7 +108,7 @@ class RobotKinematics:
         for i in range(ilimit):
             # forward kinematics and current EE pose
             self.calc_forward_kinematics(theta, radians=True)
-            current = np.array([self.ee.x, self.ee.y, self.ee.z])  # Modified to use only position
+            current = np.array([self.ee.x, self.ee.y, self.ee.z])
 
             err = xd - current
 
@@ -118,7 +118,7 @@ class RobotKinematics:
 
             # compute delta theta using damped least squares
             J_inv = self.damped_inverse_jacobian(theta)
-            dtheta = J_inv @ err  # Now dimensions match
+            dtheta = J_inv @ err
 
             # update and clip
             theta += dtheta
@@ -127,7 +127,10 @@ class RobotKinematics:
 
         self.theta = theta.copy()
         self.calc_forward_kinematics(self.theta, radians=True)
-        return np.rad2deg(self.theta)  # Return angles in degrees
+        
+        # Convert to degrees and add gripper angle (fixed at 0 degrees)
+        angles = np.rad2deg(self.theta)
+        return np.append(angles, 0.0)  # Add gripper angle as the 6th joint
 
     def calc_forward_kinematics(self, theta: list, radians=False):
         """Calculate forward kinematics for given joint angles."""
