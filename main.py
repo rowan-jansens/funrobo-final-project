@@ -15,7 +15,8 @@ sys.path.append(os.path.join(os.getcwd(), 'scripts'))
 
 from hiwonder import HiwonderRobot
 from gamepad_control import GamepadControl
-import utils
+from kinematics import RobotKinematics
+from utils import EndEffector
 
 
 # Initialize components
@@ -55,6 +56,31 @@ def shutdown_robot():
 def main():
     """ Main loop that reads gamepad commands and updates the robot accordingly. """
     try:
+        # Initialize kinematics
+        kinematics = RobotKinematics()
+        
+        # Home the robot first
+        robot.set_joint_values(robot.home_position, duration=600)
+        time.sleep(1.5)  # Allow time for servos to reposition
+        
+        # Define target position
+        target = EndEffector()
+        target.x = 0.15  # meters
+        target.y = 0.0   # meters
+        target.z = 0.15  # meters
+        target.rotx = 0  # radians
+        target.roty = 0  # radians
+        target.rotz = 0  # radians
+        
+        # Calculate required joint angles
+        joint_angles = kinematics.calc_numerical_ik(target)
+        print(f"Moving to position (x={target.x}, y={target.y}, z={target.z})")
+        print(f"Calculated joint angles: {joint_angles}")
+        
+        # Move to target position
+        robot.set_joint_values(joint_angles, duration=600)
+        time.sleep(1.5)  # Allow time for servos to reposition
+        
         # Start the gamepad monitoring thread
         gamepad_thread = threading.Thread(target=monitor_gamepad, daemon=True)
         gamepad_thread.start()
