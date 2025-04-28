@@ -95,31 +95,32 @@ class RobotKinematics:
     def damped_inverse_jacobian(self, theta, lambda_=0.01):
         """Calculate damped least squares inverse of Jacobian."""
         J = self.calc_jacobian(theta)
-        return J.T @ np.linalg.inv(J @ J.T + lambda_**2 * np.eye(6))
+        # Use only the position part (first 3 rows) of the Jacobian
+        J = J[:3, :]  # Modified to use only position part
+        return J.T @ np.linalg.inv(J @ J.T + lambda_**2 * np.eye(3))  # Changed to 3x3 identity
 
     def calc_numerical_ik(self, EE: EndEffector, tol=0.01, ilimit=50):
         """ Calculate numerical inverse kinematics based on input coordinates. """
 
-        xd = np.array([EE.x, EE.y, EE.z, EE.rotx, EE.roty, EE.rotz])  # Target pose
+        xd = np.array([EE.x, EE.y, EE.z])  # Modified to use only position
         theta = self.theta.copy()
 
         for i in range(ilimit):
             # forward kinematics and current EE pose
             self.calc_forward_kinematics(theta, radians=True)
-            current = np.array([
-                self.ee.x, self.ee.y, self.ee.z,
-                self.ee.rotx, self.ee.roty, self.ee.rotz
-            ])
+            current = np.array([self.ee.x, self.ee.y, self.ee.z])  # Modified to use only position
 
             err = xd - current
-            err[3:] = [wraptopi(a) for a in err[3:]]
 
+            # Check convergence
             if np.linalg.norm(err) < tol:
                 break
 
+            # compute delta theta using damped least squares
             J_inv = self.damped_inverse_jacobian(theta)
-            dtheta = J_inv @ err[:3]  # Use only position part
+            dtheta = J_inv @ err  # Now dimensions match
 
+            # update and clip
             theta += dtheta
             for j in range(len(theta)):
                 theta[j] = np.clip(theta[j], self.theta_limits[j][0], self.theta_limits[j][1])
