@@ -43,6 +43,9 @@ class GamepadCmds:
     arm_ee: int = 0
     arm_home: int = 0
     utility_btn: int = 0
+    arm_px = 0
+    arm_py = 0
+    arm_pz = 0
 
 def print_dataclass(obj):
     print("------------------------------------")

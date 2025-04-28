@@ -48,10 +48,25 @@ class HiwonderRobot:
         if cmd.arm_home:
             self.move_to_home_position()
 
+
+        
+
         print(f'---------------------------------------------------------------------')
         
         # self.set_base_velocity(cmd)
-        self.set_arm_velocity(cmd)
+
+
+
+        # self.set_arm_velocity(cmd)
+
+        # Update Setpoint position by integrating velocity
+        dt = 0.1
+        cmd.arm_px += cmd.arm_vx*dt
+        cmd.arm_py += cmd.arm_vy*dt
+        cmd.arm_pz += cmd.arm_vz*dt
+
+        #Command the arm to move to the set position using inverse kinematics
+        self.set_arm_position(cmd)
 
         ######################################################################
 
@@ -90,8 +105,12 @@ class HiwonderRobot:
     # Methods for interfacing with the 5-DOF robotic arm
     # -------------------------------------------------------------
 
+   
+
     def set_arm_velocity(self, cmd: ut.GamepadCmds):
         """Calculates and sets new joint angles from linear velocities.
+
+
 
         Args:
             cmd (GamepadCmds): Contains linear velocities for the arm.
