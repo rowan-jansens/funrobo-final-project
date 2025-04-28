@@ -1,17 +1,31 @@
 import cv2
 import numpy as np
 
-def init_camera(video_id=0):
+def find_working_camera():
+    # Try indices from 0 to 10
+    for i in range(10):
+        cap = cv2.VideoCapture(i)
+        if cap.isOpened():
+            ret, frame = cap.read()
+            cap.release()
+            if ret:
+                return i
+    return None
+
+def init_camera(video_id=None):
+    if video_id is None:
+        video_id = find_working_camera()
+        if video_id is None:
+            print("No working camera found")
+            return None
+        print(f"Using camera index: {video_id}")
+    
     cap = cv2.VideoCapture(video_id)
     if not cap.isOpened():
         print(f"Could not open camera {video_id}")
         return None
     
-    # Create a named window and set its size
-    window_name = "frame"
-    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(window_name, 800, 600)
-    return cap, window_name
+    return cap
 
 def get_dominant_color(frame):
     # Convert frame to RGB color space
@@ -23,9 +37,6 @@ def get_dominant_color(frame):
     x = width//2 - roi_size//2
     y = height//2 - roi_size//2
     roi = rgb_frame[y:y+roi_size, x:x+roi_size]
-    
-    # Draw rectangle to show ROI
-    cv2.rectangle(frame, (x, y), (x+roi_size, y+roi_size), (0, 255, 0), 2)
     
     # Calculate average color in ROI
     mean_color = np.mean(roi, axis=(0,1))
@@ -45,25 +56,17 @@ def get_dominant_color(frame):
         return "unknown"
 
 def get_color():
-    cap, window_name = init_camera()
+    cap = init_camera()
     if cap is None:
         return None
     
     ret, frame = cap.read()
     if ret:
         color = get_dominant_color(frame)
-        cv2.putText(frame, f"Color: {color}", (10, 30), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        
-        cv2.imshow(window_name, frame)
-        cv2.waitKey(1)  # Show frame briefly
-        
         cap.release()
-        cv2.destroyAllWindows()
         return color
     else:
         cap.release()
-        cv2.destroyAllWindows()
         return None
 
 if __name__ == "__main__":
