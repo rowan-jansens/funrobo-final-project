@@ -65,11 +65,11 @@ def main():
         
         # Define target position
         target = EndEffector()
-        target.x = 0.15  # meters
+        target.x = 0.25  # meters
         target.y = 0.0   # meters
-        target.z = 0.15  # meters
+        target.z = 0.05  # meters
         target.rotx = 0  # radians
-        target.roty = 0  # radians
+        target.roty = 2  # radians
         target.rotz = 0  # radians
         
         # Calculate required joint angles
