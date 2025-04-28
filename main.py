@@ -53,33 +53,41 @@ def shutdown_robot():
     print("[INFO] Shutdown complete. Safe to power off.")
 
 
+def read_angles_from_file(filepath):
+    """Read joint angles from a text file."""
+    angles_list = []
+    try:
+        with open(filepath, 'r') as f:
+            for line in f:
+                # Parse 6 angles from each line
+                angles = [float(x) for x in line.strip().split(',')]
+                if len(angles) != 6:
+                    raise ValueError(f"Each line must contain 6 angles: {line}")
+                angles_list.append(angles)
+        return angles_list
+    except Exception as e:
+        print(f"Error reading angles file: {e}")
+        return None
+
+
 def main():
     """ Main loop that reads gamepad commands and updates the robot accordingly. """
     try:
-        # Initialize kinematics
-        kinematics = RobotKinematics()
-        
         # Home the robot first
         robot.set_joint_values(robot.home_position, duration=600)
         time.sleep(1.5)  # Allow time for servos to reposition
         
-        # Define target position
-        target = EndEffector()
-        target.x = 0.25  # meters
-        target.y = 0.0   # meters
-        target.z = 0.05  # meters
-        target.rotx = 0  # radians
-        target.roty = 2  # radians
-        target.rotz = 0  # radians
+        # Read and execute pre-recorded movements
+        angles_file = "joint_angles.txt"
+        movement_delay = 1.0  # Time between movements in seconds
         
-        # Calculate required joint angles
-        joint_angles = kinematics.calc_numerical_ik(target)
-        print(f"Moving to position (x={target.x}, y={target.y}, z={target.z})")
-        print(f"Calculated joint angles: {joint_angles}")
-        
-        # Move to target position
-        robot.set_joint_values(joint_angles, duration=600)
-        time.sleep(1.5)  # Allow time for servos to reposition
+        print("\nExecuting pre-recorded movements...")
+        angles_list = read_angles_from_file(angles_file)
+        if angles_list:
+            for i, angles in enumerate(angles_list):
+                print(f"Movement {i+1}/{len(angles_list)}: {angles}")
+                robot.set_joint_values(angles, duration=600)
+                time.sleep(movement_delay)
         
         # Start the gamepad monitoring thread
         gamepad_thread = threading.Thread(target=monitor_gamepad, daemon=True)
@@ -92,9 +100,6 @@ def main():
 
             if cmdlist:
                 latest_cmd = cmdlist[-1]
-                # accessing the utility button, LB, on the gamepad (uncomment code below to use)
-                # print(f'Utility Button is [ {latest_cmd.utility_btn} ]')
-                
                 robot.set_robot_commands(latest_cmd)
 
             elapsed = time.time() - cycle_start
