@@ -9,13 +9,13 @@ import sys, os
 import time
 import threading
 import traceback
+import numpy as np
 
 # Extend system path to include script directory
 sys.path.append(os.path.join(os.getcwd(), 'scripts'))
 
 from hiwonder import HiwonderRobot
 from gamepad_control import GamepadControl
-from kinematics import RobotKinematics
 from utils import EndEffector
 
 
@@ -78,22 +78,25 @@ def main():
         time.sleep(1.5)  # Allow time for servos to reposition
         
         # Read and execute pre-recorded movements
-        angles_file = "joint_angles.txt"
-        movement_delay = 1.0  # Time between movements in seconds
+        angles_file = "pick_up.csv"
+        movement_delay = 0  # Time between movements in seconds
         
         print("\nExecuting pre-recorded movements...")
         angles_list = read_angles_from_file(angles_file)
         if angles_list:
             for i, angles in enumerate(angles_list):
                 print(f"Movement {i+1}/{len(angles_list)}: {angles}")
-                robot.set_joint_values(angles, duration=600)
+                robot.set_joint_values(np.array(angles) * (11/9), duration=500)
                 time.sleep(movement_delay)
+                if (i == 1):
+                    time.sleep(1)
+
         
         # Start the gamepad monitoring thread
         gamepad_thread = threading.Thread(target=monitor_gamepad, daemon=True)
         gamepad_thread.start()
         
-        control_interval = 0.25  # Seconds per control cycle
+        control_interval = 0.1  # Seconds per control cycle
         
         while True:
             cycle_start = time.time()
