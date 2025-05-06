@@ -10,6 +10,7 @@ import time
 import threading
 import traceback
 import numpy as np
+from vision import get_block_color
 
 # Extend system path to include script directory
 sys.path.append(os.path.join(os.getcwd(), 'scripts'))
@@ -52,44 +53,62 @@ def shutdown_robot():
 
     print("[INFO] Shutdown complete. Safe to power off.")
 
-
+# function to load in the movement-token from CSV file
 def read_angles_from_file(filepath):
     """Read joint angles from a text file."""
     angles_list = []
     try:
         with open(filepath, 'r') as f:
             for line in f:
-                # Parse 6 angles from each line
+                # Parse 6 angles from each line and the timedelay
                 angles = [float(x) for x in line.strip().split(',')]
-                if len(angles) != 6:
-                    raise ValueError(f"Each line must contain 6 angles: {line}")
+                if len(angles) != 7:
+                    raise ValueError(f"Each line must contain 6 angles nd 1 time: {line}")
                 angles_list.append(angles)
         return angles_list
     except Exception as e:
         print(f"Error reading angles file: {e}")
         return None
 
+# function to run a movement-token on the arm
+def run_movement(filepath):
+
+    print("\nExecuting pre-recorded movements...")
+    angles_list = read_angles_from_file(filepath)
+    if angles_list:
+        for i, angles in enumerate(angles_list):
+            print(f"Movement {i+1}/{len(angles_list)}: {angles}")
+            print(np.array(angles[0:6]))
+            # command the arm to move to all the angles in the array, and they sleep for comanded delay
+            robot.set_joint_values(np.array(angles[0:6]) * (11/9), 500)
+            time.sleep(angles[6]/1000)
 
 def main():
     """ Main loop that reads gamepad commands and updates the robot accordingly. """
     try:
         # Home the robot first
-        robot.set_joint_values(robot.home_position, duration=600)
+        robot.set_joint_values(robot.home_position, duration=500)
         time.sleep(1.5)  # Allow time for servos to reposition
         
-        # Read and execute pre-recorded movements
-        angles_file = "pick_up.csv"
-        movement_delay = 0  # Time between movements in seconds
         
-        print("\nExecuting pre-recorded movements...")
-        angles_list = read_angles_from_file(angles_file)
-        if angles_list:
-            for i, angles in enumerate(angles_list):
-                print(f"Movement {i+1}/{len(angles_list)}: {angles}")
-                robot.set_joint_values(np.array(angles) * (11/9), duration=500)
-                time.sleep(movement_delay)
-                if (i == 1):
-                    time.sleep(1)
+        # run the sorting logic 30 times
+        for i in range(30):
+
+            # start by picking up a block
+            run_movement('pick_up.csv')
+            # check what color the block is
+            color = get_block_color()
+            print(color)
+
+            # decide were to drop off the block based on the color
+            if color == 'red':
+                run_movement('drop_off_1.csv')
+            if color == 'blue':
+                run_movement('drop_off_2.csv')
+            if color == 'green':
+                run_movement('drop_off_3.csv')
+
+        
 
         
         # Start the gamepad monitoring thread

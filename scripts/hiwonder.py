@@ -25,8 +25,8 @@ class HiwonderRobot:
         self.joint_values = [0, 0, 90, -30, 0, 0]  # degrees
         self.home_position = [0, 0, 90, -30, 0, 0]  # degrees
         self.joint_limits = [
-            [-120, 120], [-90, 90], [-120, 120],
-            [-100, 100], [-90, 90], [-120, 30]
+            [-145, 145], [-90, 90], [-135, 135],
+            [-115, 115], [-90, 90], [-120, 30]
         ]
         self.joint_control_delay = 0.2 # secs
         self.speed_control_delay = 0.2
