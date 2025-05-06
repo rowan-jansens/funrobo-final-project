@@ -2,6 +2,8 @@
 
 <img src = "media/IMG_2692.gif" width="" height="400">
 
+Link to final report: https://github.com/rowan-jansens/funrobo-final-project/blob/v2024-new/FunRobo%20Final%20Project%20Technical%20Report.pdf
+
 
 This repository provides the python libraries for interfacing with the Hiwonder 5-DOF mobile manipulator. The robot platform has an onboard **Raspberry Pi 4B** which serves as the main compute unit of the system. The 5-DOF arm are driven by serial bus servos controlled over serial while the mobile base is driven by DC motors controlled by a custom driver board with communication over I2C.
 
